@@ -1,0 +1,4 @@
+interface:
+  display_name: "HTML to PPT Deck Export"
+  short_description: "Export long HTML decks into balanced PPTX"
+  default_prompt: "Use $html-to-ppt-deck-export to turn this long HTML visual report into a balanced 16:9 PPTX."
