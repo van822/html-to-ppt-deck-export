@@ -3,7 +3,7 @@
 This roadmap describes release scope and possible follow-up work, not delivery
 dates. Future items are not available features.
 
-## v0.1 — reproducible baseline (release preparation)
+## v0.1 — reproducible baseline (released 2026-09-10)
 
 - Reproducible npm installation with a committed lockfile and MIT license.
 - An offline HTML/slide-plan example and reviewed demo contact sheet.

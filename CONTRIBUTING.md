@@ -54,6 +54,25 @@ any visual changes in the PR. Run git diff --check and inspect staged files.
 
 ## Compatibility and dependency policy
 
+### Feature development workflow
+
+Implement v0.2 work in this order: slide-plan validation, overflow detection,
+then sparse/dense layout diagnostics. Each feature has its own Issue, branch
+and PR; do not combine all three into a single change.
+
+Issue → dedicated branch → implementation → tests → documentation → pull request
+→ CI → merge
+
+Each PR describes the problem, new or changed behavior, backward compatibility,
+tests and remaining limitations. Reference its Issue and preserve the preview
+review boundary. Dependency updates also require human review and passing CI;
+Dependabot's weekly checks do not authorize automatic merging.
+
+See [SECURITY.md](SECURITY.md) for private vulnerability reporting and the
+supported-version policy. Never place sensitive source material in public Issues.
+
+### Compatibility requirements
+
 Preserve the preview-first architecture, script names and arguments, manifest
 fields, numeric ordering, replacement aliases and valid slide plans. Reviewable
 bug fixes may reject unsafe or invalid inputs that previously appeared to succeed.
@@ -70,7 +89,7 @@ the same export and QA checks as code changes.
 Require clean-install checks and the Windows CI matrix to pass, inspect the demo,
 review outstanding dependency advisories, and record remaining limitations.
 Until release approval, changes stay under Unreleased. When publishing, move the
-approved entries into a dated 0.1.0 section, create the corresponding tag and
+approved entries into a dated version section, create the corresponding tag and
 GitHub Release, and attach the reviewed example output if useful. Generated decks
 do not belong in source control. The package is private to prevent accidental npm
 publication; GitHub is the intended distribution channel.

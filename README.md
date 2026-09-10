@@ -1,5 +1,7 @@
 # HTML to PPT Deck Export
 
+[![Windows CI](https://github.com/van822/html-to-ppt-deck-export/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/van822/html-to-ppt-deck-export/actions/workflows/ci.yml?query=branch%3Amain)
+
 A Codex skill and standalone Node scripts for turning planned HTML content into
 image-based, 16:9 PowerPoint decks.
 
@@ -239,6 +241,8 @@ overflow detection are future work.
   image-size, a transitive dependency of pinned pptxgenjs 4.0.1. These remain
   unresolved in this dependency tree. Review before publishing; npm audit fix
   --force proposes an incompatible PptxGenJS downgrade.
+
+For vulnerability reporting and supported-version policy, see [SECURITY.md](SECURITY.md).
 
 ## Roadmap
 
