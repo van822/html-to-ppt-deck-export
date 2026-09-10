@@ -1,0 +1,29 @@
+{
+  "name": "html-to-ppt-deck-export",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Preview-first HTML to image-based PowerPoint export, with a Codex skill and standalone scripts.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/van822/html-to-ppt-deck-export.git"
+  },
+  "bugs": "https://github.com/van822/html-to-ppt-deck-export/issues",
+  "engines": { "node": "^22.0.0 || ^24.13.1" },
+  "scripts": {
+    "check": "node scripts/check.js",
+    "test": "npm run test:unit && npm run test:pipeline",
+    "test:unit": "node --test tests/unit/*.test.js",
+    "test:pipeline": "node --test tests/pipeline/*.test.js",
+    "test:integration": "node --test --test-concurrency=1 tests/integration/*.test.js",
+    "preview": "node skills/html-to-ppt-deck-export/scripts/export_preview.js",
+    "contact-sheet": "node skills/html-to-ppt-deck-export/scripts/make_contact_sheet.js",
+    "replace-previews": "node skills/html-to-ppt-deck-export/scripts/replace_preview_pages.js",
+    "pptx": "node skills/html-to-ppt-deck-export/scripts/ppt_from_preview.js",
+    "qa": "node skills/html-to-ppt-deck-export/scripts/qa_pptx_full_bleed.js"
+  },
+  "dependencies": {
+    "playwright": "1.61.1",
+    "pptxgenjs": "4.0.1"
+  }
+}

@@ -1,0 +1,25 @@
+name: Bug report
+description: Report a reproducible export or QA defect.
+title: "[Bug]: "
+body:
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Include the command and a minimal shareable HTML/slide-plan example. Remove private data.
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Expected and actual behavior
+      description: Include relevant errors or a contact sheet for layout problems.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Windows version, node --version, npm --version, and repository commit.
+    validations:
+      required: true
