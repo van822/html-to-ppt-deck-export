@@ -1,7 +1,13 @@
-﻿node_modules/
-outputs/
+node_modules/
+/outputs/
+/tmp/
+/.cache/
 *.pptx
 *.png
 *.pdf
+!/docs/assets/basic-report-contact-sheet.png
 .env
+.env.*
+*.log
 .DS_Store
+Thumbs.db
