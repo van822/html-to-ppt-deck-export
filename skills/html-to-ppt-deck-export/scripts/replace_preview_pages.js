@@ -3,6 +3,8 @@
 
 const fs = require("fs");
 const path = require("path");
+const { assertSafeOutput } = require("./lib/output_safety");
+const { replacementSequence } = require("./lib/replacement_sequence");
 
 const sourceDir = process.argv[2];
 const outputDir = process.argv[3];
@@ -19,14 +21,23 @@ function slideNumber(name) {
   return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
 }
 
-function resolveFromRules(p) {
-  if (path.isAbsolute(p)) return p;
-  return path.resolve(path.dirname(path.resolve(rulesPath)), p);
-}
-
 const src = path.resolve(sourceDir);
 const dst = path.resolve(outputDir);
 const rules = JSON.parse(fs.readFileSync(rulesPath, "utf8"));
+
+const source = fs.readdirSync(src)
+  .filter((name) => /^planned_\d+\.png$/i.test(name))
+  .sort((a, b) => slideNumber(a) - slideNumber(b))
+  .map((name) => ({ type: "source", path: path.join(src, name), original: name }));
+
+if (!source.length) throw new Error(`No planned_*.png files found in ${src}`);
+const sequence = replacementSequence(source, rules, rulesPath);
+assertSafeOutput(dst, [src, rulesPath, ...sequence.map((entry) => entry.path)]);
+for (const entry of sequence) {
+  if (!fs.existsSync(entry.path)) throw new Error(`Missing image: ${entry.path}`);
+  if (!fs.statSync(entry.path).isFile()) throw new Error(`Image is not a file: ${entry.path}`);
+  fs.accessSync(entry.path, fs.constants.R_OK);
+}
 
 if (fs.existsSync(dst)) {
   if (!force) throw new Error(`Output directory exists: ${dst}. Use --force to replace it.`);
@@ -34,29 +45,7 @@ if (fs.existsSync(dst)) {
 }
 fs.mkdirSync(dst, { recursive: true });
 
-let sequence = fs.readdirSync(src)
-  .filter((name) => /^planned_\d+\.png$/i.test(name))
-  .sort((a, b) => slideNumber(a) - slideNumber(b))
-  .map((name) => ({ type: "source", path: path.join(src, name), original: name }));
-
-if (!sequence.length) throw new Error(`No planned_*.png files found in ${src}`);
-
-const replacements = rules.replace || rules.replacements || [];
-for (const op of replacements.slice().sort((a, b) => b.start - a.start)) {
-  const start = Number(op.start);
-  const deleteCount = Number(op.deleteCount ?? op.remove ?? 1);
-  const images = (op.images || (op.image ? [op.image] : [])).map((p) => ({
-    type: "replacement",
-    path: resolveFromRules(p),
-    original: p,
-  }));
-  if (!start || start < 1) throw new Error(`Invalid replacement start: ${op.start}`);
-  if (!images.length) throw new Error(`Replacement at ${start} has no images.`);
-  sequence.splice(start - 1, deleteCount, ...images);
-}
-
 sequence.forEach((entry, idx) => {
-  if (!fs.existsSync(entry.path)) throw new Error(`Missing image: ${entry.path}`);
   const outName = `planned_${String(idx + 1).padStart(2, "0")}.png`;
   fs.copyFileSync(entry.path, path.join(dst, outName));
 });

@@ -9,7 +9,7 @@
     "url": "https://github.com/van822/html-to-ppt-deck-export.git"
   },
   "bugs": "https://github.com/van822/html-to-ppt-deck-export/issues",
-  "engines": { "node": "^22.0.0 || ^24.0.0" },
+  "engines": { "node": "^22.0.0 || ^24.13.1" },
   "scripts": {
     "check": "node scripts/check.js",
     "test": "npm run test:unit && npm run test:pipeline",

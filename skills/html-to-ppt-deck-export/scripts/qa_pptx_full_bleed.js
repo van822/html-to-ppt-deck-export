@@ -16,20 +16,51 @@ if (!fs.existsSync(resolved)) throw new Error(`PPTX not found: ${resolved}`);
 
 const script = `
 $ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = New-Object System.Text.UTF8Encoding
 $p = Resolve-Path -LiteralPath '${resolved.replace(/'/g, "''")}'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::OpenRead($p)
+function Read-EntryXml($entry) {
+  if ($null -eq $entry) { throw 'Missing XML entry in PPTX.' }
+  $sr = New-Object System.IO.StreamReader($entry.Open())
+  try {
+    $document = New-Object System.Xml.XmlDocument
+    $document.XmlResolver = $null
+    $document.LoadXml($sr.ReadToEnd())
+    return ,$document
+  } finally { $sr.Dispose() }
+}
+function Get-Namespaces($document) {
+  $ns = New-Object System.Xml.XmlNamespaceManager($document.NameTable)
+  $ns.AddNamespace('p', 'http://schemas.openxmlformats.org/presentationml/2006/main')
+  $ns.AddNamespace('a', 'http://schemas.openxmlformats.org/drawingml/2006/main')
+  return ,$ns
+}
 try {
-  $slides = $zip.Entries |
+  $slides = @($zip.Entries |
     Where-Object { $_.FullName -match '^ppt/slides/slide\\d+\\.xml$' } |
-    Sort-Object { [int]([regex]::Match($_.FullName, 'slide(\\d+)\\.xml').Groups[1].Value) }
+    Sort-Object { [int]([regex]::Match($_.FullName, 'slide(\\d+)\\.xml').Groups[1].Value) })
+  if ($slides.Count -eq 0) { throw 'PPTX contains no slide XML entries.' }
+  $presentation = Read-EntryXml ($zip.GetEntry('ppt/presentation.xml'))
+  $presentationNs = Get-Namespaces $presentation
+  $declaredSlides = $presentation.SelectNodes('/p:presentation/p:sldIdLst/p:sldId', $presentationNs)
+  if ($declaredSlides.Count -ne $slides.Count) { throw 'PPTX slide count does not match presentation.xml.' }
+  $size = $presentation.SelectSingleNode('/p:presentation/p:sldSz', $presentationNs)
+  $wide = $null -ne $size -and $size.GetAttribute('cx') -eq '12192000' -and $size.GetAttribute('cy') -eq '6858000'
   $bad = @()
   foreach ($e in $slides) {
-    $sr = New-Object System.IO.StreamReader($e.Open())
-    $xml = $sr.ReadToEnd()
-    $sr.Close()
-    $picCount = ([regex]::Matches($xml, '<p:pic>')).Count
-    $fullBleed = $xml -match '<a:off x="0" y="0"/>' -and $xml -match '<a:ext cx="12192000" cy="6858000"/>'
+    $xml = Read-EntryXml $e
+    $ns = Get-Namespaces $xml
+    $picCount = $xml.SelectNodes('//p:pic', $ns).Count
+    $picture = $xml.SelectSingleNode('/p:sld/p:cSld/p:spTree/p:pic', $ns)
+    $fullBleed = $false
+    if ($null -ne $picture) {
+      $off = $picture.SelectSingleNode('p:spPr/a:xfrm/a:off', $ns)
+      $ext = $picture.SelectSingleNode('p:spPr/a:xfrm/a:ext', $ns)
+      $fullBleed = $wide -and $null -ne $off -and $null -ne $ext -and
+        $off.GetAttribute('x') -eq '0' -and $off.GetAttribute('y') -eq '0' -and
+        $ext.GetAttribute('cx') -eq '12192000' -and $ext.GetAttribute('cy') -eq '6858000'
+    }
     if ($picCount -ne 1 -or -not $fullBleed) {
       $bad += [pscustomobject]@{ slide = $e.FullName; pictureCount = $picCount; fullBleed = $fullBleed }
     }

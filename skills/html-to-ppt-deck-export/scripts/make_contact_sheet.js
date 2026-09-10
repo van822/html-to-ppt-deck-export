@@ -45,10 +45,6 @@ if (!previewDir) {
 const dir = path.resolve(previewDir);
 const outPath = path.resolve(outputPng || path.join(dir, "contact_sheet.png"));
 
-function fileUrl(p) {
-  return "file:///" + path.resolve(p).replace(/\\/g, "/").replace(/#/g, "%23");
-}
-
 function slideNumber(name) {
   const m = name.match(/planned_(\d+)\.png$/i);
   return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
@@ -75,7 +71,7 @@ async function main() {
     return `
       <figure class="card">
         <div class="label">${String(num).padStart(2, "0")} · ${name}</div>
-        <img src="${fileUrl(path.join(dir, name))}" />
+        <img src="data:image/png;base64,${fs.readFileSync(path.join(dir, name)).toString("base64")}" />
       </figure>`;
   }).join("\n");
 
@@ -120,17 +116,24 @@ async function main() {
     <div class="grid">${cards}</div>`;
 
   const browser = await launchBrowser();
-  const page = await browser.newPage({ viewport: { width: 1800, height: 1200 }, deviceScaleFactor: 1 });
-  await page.setContent(html, { waitUntil: "domcontentloaded" });
-  await page.evaluate(async () => {
-    const imgs = Array.from(document.images || []);
-    await Promise.all(imgs.map((img) => img.complete ? true : new Promise((resolve) => {
-      img.addEventListener("load", resolve, { once: true });
-      img.addEventListener("error", resolve, { once: true });
-    })));
-  });
-  await page.screenshot({ path: outPath, fullPage: true });
-  await browser.close();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1800, height: 1200 }, deviceScaleFactor: 1 });
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
+    await page.evaluate(async () => {
+      const imgs = Array.from(document.images || []);
+      await Promise.all(imgs.map((img) => img.complete ? true : new Promise((resolve) => {
+        img.addEventListener("load", resolve, { once: true });
+        img.addEventListener("error", resolve, { once: true });
+      })));
+      for (const img of imgs) {
+        if (!img.naturalWidth) throw new Error("Contact sheet image failed to load.");
+        await img.decode();
+      }
+    });
+    await page.screenshot({ path: outPath, fullPage: true });
+  } finally {
+    await browser.close();
+  }
 
   console.log(JSON.stringify({
     output: outPath,

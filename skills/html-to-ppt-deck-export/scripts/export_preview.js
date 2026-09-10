@@ -3,6 +3,8 @@
 
 const fs = require("fs");
 const path = require("path");
+const { pathToFileURL } = require("url");
+const { assertSafeOutput } = require("./lib/output_safety");
 const { createRequire } = require("module");
 const { execSync } = require("child_process");
 
@@ -37,13 +39,13 @@ const sourceHtml = process.argv[2];
 const planPath = process.argv[3];
 const outputDir = process.argv[4];
 
-if (!sourceHtml || !planPath || !outputDir) {
+if (require.main === module && (!sourceHtml || !planPath || !outputDir)) {
   console.error("Usage: node export_preview.js <source.html> <slide_plan.json> <preview_dir>");
   process.exit(1);
 }
 
 function fileUrl(p) {
-  return "file:///" + path.resolve(p).replace(/\\/g, "/").replace(/#/g, "%23");
+  return pathToFileURL(path.resolve(p)).href;
 }
 
 function readJson(p) {
@@ -298,29 +300,33 @@ async function main() {
   if (!slides.length) throw new Error("slide_plan.json must contain a non-empty slides array.");
 
   const shotDir = path.resolve(outputDir);
+  fs.accessSync(sourceHtml, fs.constants.R_OK);
+  assertSafeOutput(shotDir, [sourceHtml, planPath]);
   cleanDir(shotDir);
 
   const browser = await launchBrowser();
-  const page = await browser.newPage({
-    viewport: { width: stageW, height: stageH },
-    deviceScaleFactor,
-  });
-
-  await page.goto(fileUrl(sourceHtml), { waitUntil: "domcontentloaded" });
-  await waitForPage(page, plan.waitMs);
-  await installBuilder(page, plan, stageW, stageH);
-
   const rendered = [];
-  for (let i = 0; i < slides.length; i++) {
-    const spec = slides[i];
-    const metrics = await page.evaluate((s) => window.__buildPptSlide(s), spec);
-    await page.waitForTimeout(plan.perSlideWaitMs ?? 120);
-    const shotPath = path.join(shotDir, `planned_${String(i + 1).padStart(2, "0")}.png`);
-    await page.screenshot({ path: shotPath, clip: metrics.clip });
-    rendered.push({ slide: i + 1, ...metrics, path: shotPath });
-  }
+  try {
+    const page = await browser.newPage({
+      viewport: { width: stageW, height: stageH },
+      deviceScaleFactor,
+    });
 
-  await browser.close();
+    await page.goto(fileUrl(sourceHtml), { waitUntil: "domcontentloaded" });
+    await waitForPage(page, plan.waitMs);
+    await installBuilder(page, plan, stageW, stageH);
+
+    for (let i = 0; i < slides.length; i++) {
+      const spec = slides[i];
+      const metrics = await page.evaluate((s) => window.__buildPptSlide(s), spec);
+      await page.waitForTimeout(plan.perSlideWaitMs ?? 120);
+      const shotPath = path.join(shotDir, `planned_${String(i + 1).padStart(2, "0")}.png`);
+      await page.screenshot({ path: shotPath, clip: metrics.clip });
+      rendered.push({ slide: i + 1, ...metrics, path: shotPath });
+    }
+  } finally {
+    await browser.close();
+  }
 
   const manifestPath = path.join(shotDir, "manifest.json");
   fs.writeFileSync(manifestPath, JSON.stringify({
@@ -354,7 +360,11 @@ async function main() {
   }, null, 2));
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Internal test seam; command-line arguments and output remain the public interface.
+module.exports = { installBuilder };
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
