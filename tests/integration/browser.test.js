@@ -129,7 +129,15 @@ test("four-page offline example produces previews, contact sheet, matching PPTX 
     await t.test("installed skill copy resolves dependencies from the active repository", () => {
       const external = temp(t);
       const copied = path.join(external, "skill-scripts");
-      fs.cpSync(scripts, copied, { recursive: true });
+      // Copy regular script files explicitly: older supported Node patches have
+      // a Windows Unicode-path bug in recursive cpSync.
+      for (const entry of fs.readdirSync(scripts, { recursive: true })) {
+        const source = path.join(scripts, entry);
+        if (!fs.statSync(source).isFile()) continue;
+        const target = path.join(copied, entry);
+        fs.mkdirSync(path.dirname(target), { recursive: true });
+        fs.copyFileSync(source, target);
+      }
       const { spawnSync } = require("node:child_process");
       const exported = spawnSync(process.execPath, [path.join(copied, "ppt_from_preview.js"),
         preview, path.join(dir, "external-skill.pptx")], { cwd: root, encoding: "utf8", timeout: 60000 });
