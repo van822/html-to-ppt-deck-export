@@ -1,9 +1,11 @@
 # Changelog
 
 Notable changes are recorded here, following a simple Keep a Changelog structure.
-Version numbers follow Semantic Versioning. No release date or tag is claimed yet.
+Version numbers follow Semantic Versioning.
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-09-10
 
 ### Added
 
@@ -11,6 +13,9 @@ Version numbers follow Semantic Versioning. No release date or tag is claimed ye
 - Repository agent guidance, contributor documentation, roadmap and GitHub templates.
 - A deterministic four-page HTML/slide-plan example and demo contact sheet.
 - Node unit, pipeline and Playwright integration tests, with Windows CI on Node 22/24.
+- Security policy and GitHub private vulnerability reporting guidance.
+- Weekly npm dependency update checks through Dependabot, with manual review.
+- A main-branch CI badge and an Issue-to-PR development workflow.
 
 ### Fixed
 
@@ -32,6 +37,7 @@ Version numbers follow Semantic Versioning. No release date or tag is claimed ye
 - Full QA requires Windows PowerShell; exported slide content is rasterized.
 - Structural QA does not detect unreadable text, clipping or poor composition.
 - npm audit reports high-severity image-size advisories through pptxgenjs 4.0.1.
-  They remain unresolved in this pinned dependency tree; review before publishing.
+  They remain unresolved in this release's pinned dependency tree; see SECURITY.md.
 
-[Unreleased]: https://github.com/van822/html-to-ppt-deck-export/compare/e893191078b4af15200bc63f1ce4099d58341f85...HEAD
+[Unreleased]: https://github.com/van822/html-to-ppt-deck-export/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/van822/html-to-ppt-deck-export/compare/e893191078b4af15200bc63f1ce4099d58341f85...v0.1.0
