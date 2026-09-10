@@ -23,7 +23,7 @@
     "qa": "node skills/html-to-ppt-deck-export/scripts/qa_pptx_full_bleed.js"
   },
   "dependencies": {
-    "playwright": "1.61.1",
+    "playwright": "1.63.0",
     "pptxgenjs": "4.0.1"
   }
 }
