@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A small report, ready for slides</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f1e9d8; color: #213d3b; font-family: Arial, sans-serif; }
+    main { max-width: 1200px; margin: 40px auto; }
+    .panel { padding: 48px; background: #fffdf7; border: 2px solid #d3d8cd; border-radius: 20px; margin: 32px 0; }
+    .eyebrow { color: #61746b; font-size: 18px; font-weight: 700; letter-spacing: 3px; margin: 0 0 22px; }
+    h1 { font-size: 68px; line-height: 1.08; margin: 0 0 28px; max-width: 900px; }
+    h2 { font-size: 42px; line-height: 1.15; margin: 0 0 24px; }
+    p { font-size: 26px; line-height: 1.5; margin: 0 0 24px; }
+    .lead { max-width: 920px; }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .card { border-radius: 12px; background: #e9efe5; padding: 28px; min-height: 235px; }
+    .card h3 { font-size: 28px; margin: 0 0 18px; }
+    .card p { font-size: 23px; margin: 0; }
+    .step { display: block; color: #708569; font-size: 18px; margin-bottom: 20px; }
+    .diagram { width: 100%; display: block; margin: 24px 0; }
+    .caption { font-size: 21px; color: #61746b; margin: 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 24px; line-height: 1.4; }
+    th, td { padding: 20px; text-align: left; border-bottom: 1px solid #cbd5c7; }
+    th { color: #fffdf7; background: #285c53; font-size: 21px; }
+    td:first-child { font-weight: 700; width: 29%; }
+    tr:last-child td { border-bottom: 0; }
+    .context { color: #61746b; font-size: 18px; margin-top: 24px; }
+  </style>
+</head>
+<body>
+<main>
+  <header class="panel" id="intro">
+    <div class="eyebrow">BASIC REPORT / A REPRODUCIBLE EXAMPLE</div>
+    <h1>A small report,<br>ready for slides.</h1>
+    <p class="lead">Four content types demonstrate the export workflow: a clear opening, grouped cards, a diagram, and a structured table.</p>
+    <p class="caption">Static HTML. Local assets. An explicit plan for every slide.</p>
+  </header>
+  <section class="panel" id="cards">
+    <h2>Give each slide a clear job</h2>
+    <p>Group content by meaning before choosing the page boundaries.</p>
+    <div class="cards">
+      <article class="card"><span class="step">01 / PLAN</span><h3>Select</h3><p>Choose the source blocks that support one message.</p></article>
+      <article class="card"><span class="step">02 / PREVIEW</span><h3>Compose</h3><p>Fit the selected content inside a fixed 16:9 stage.</p></article>
+      <article class="card"><span class="step">03 / REVIEW</span><h3>Inspect</h3><p>Check text, panel edges, and spacing before export.</p></article>
+    </div>
+  </section>
+  <section class="panel" id="diagram">
+    <h2>Review before assembly</h2>
+    <p>This inline SVG stays with the HTML and needs no external image service.</p>
+    <svg class="diagram" viewBox="0 0 1050 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Plan, preview, review, and assemble">
+      <path d="M100 120H950" stroke="#8ba087" stroke-width="5"/>
+      <g fill="#285c53">
+        <rect x="0" y="40" width="225" height="160" rx="18"/>
+        <rect x="275" y="40" width="225" height="160" rx="18"/>
+        <rect x="550" y="40" width="225" height="160" rx="18"/>
+        <rect x="825" y="40" width="225" height="160" rx="18"/>
+      </g>
+      <g fill="#fffdf7" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700">
+        <text x="112" y="131">Plan</text><text x="387" y="131">Preview</text>
+        <text x="662" y="131">Review</text><text x="937" y="131">Assemble</text>
+      </g>
+    </svg>
+    <p class="caption">If a preview needs changes, revise the HTML or plan and render it again.</p>
+  </section>
+  <section class="panel" id="table">
+    <h2>Know what each check can tell you</h2>
+    <p>A compact checklist keeps the handoff concrete.</p>
+    <table>
+      <thead><tr><th>Artifact</th><th>What to inspect</th></tr></thead>
+      <tbody>
+        <tr><td>Preview PNGs</td><td>Text readability and complete content blocks</td></tr>
+        <tr><td>Contact sheet</td><td>Page order and consistent composition</td></tr>
+        <tr><td>PPTX QA</td><td>One full-slide image on each wide slide</td></tr>
+      </tbody>
+    </table>
+    <p class="context">Source-only note: the plan omits this paragraph using a partial block.</p>
+  </section>
+</main>
+</body>
+</html>

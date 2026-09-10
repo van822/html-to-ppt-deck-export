@@ -17,6 +17,21 @@ Default dimensions:
 
 ## Workflow
 
+Before starting, clone the repository and run `npm ci` and
+`npx playwright install chromium` from its root. Use Node 22 or Node 24.13.1+
+within the 24 series (24 recommended). Final QA requires Windows PowerShell
+(`powershell.exe`); full Linux/macOS support is not claimed. See the repository
+README for dependency advisories.
+
+When installed separately as a Codex skill, run from a matching repository
+checkout that has completed `npm ci`. Skill installation does not install Node
+dependencies or the browser. Keep existing dependency lookup fallbacks.
+
+Stage dimensions use CSS pixels. With scale factor 2, full-stage PNGs are
+3200x1800; content cropping can produce smaller images with pixel-rounding
+differences. Set per-slide `fit.noCrop: true` to capture the full stage. PPTX
+content is rasterized: text, tables and diagrams are not individually editable.
+
 1. Inspect the source HTML and any source Markdown/script.
    - Identify real content blocks and their source meaning.
    - Do not assume one HTML section equals one slide.
@@ -32,6 +47,8 @@ Default dimensions:
    - Use `scripts/export_preview.js <source.html> <slide_plan.json> <preview_dir>`.
    - The script clones planned HTML blocks into a fixed `#ppt-export-stage`.
    - Tune each slide with `width`, `maxScale`, `padX`, `padY`, `topBias`, `cropX`, `cropY`, and `className`.
+   - The preview directory is cleared each run. Use a new directory to retain an
+     accepted version; never choose an input or project directory as output.
 
 4. Generate a contact sheet.
    - Use `scripts/make_contact_sheet.js <preview_dir> [contact_sheet.png]`.
@@ -98,6 +115,8 @@ Fit fields:
 - `topBias`: vertical position inside available space, `0` top, `0.5` center, `1` bottom.
 - `cropX` / `cropY` / `minClipW`: 16:9 crop around the rendered content.
 - `className`: export-only CSS hook for slide-specific compression or typography.
+- `noCrop`: capture the full stage instead of a content crop.
+- `preserveWide`: skip automatic short/medium width adjustments.
 
 ## Visual QA Checklist
 
@@ -156,6 +175,16 @@ Use `replace_preview_pages.js` for local iteration after a replacement PNG has a
 ```
 
 The script copies source `planned_*.png` files to a new output directory and renumbers them from `planned_01.png`.
+Starts refer to 1-based positions in the original sequence; operations run in
+descending start order. Image paths resolve relative to the rules file.
+`replacements`, `remove`, and `image` remain accepted aliases. `--force` replaces
+existing output after preflight; overlaps that would remove inputs are rejected.
+
+QA reports `pptx`, `slides`, `badCount` and `bad`. Exit codes are 0 for success,
+1 for input/runtime failure and 2 for layout failure. It checks a non-empty
+presentation, wide dimensions, one picture per slide and that picture's own
+full-bleed transform. Inspect readability, clipping and whitespace in previews;
+structural QA does not assess them.
 
 ## Failure Modes
 

@@ -1,0 +1,29 @@
+{
+  "stage": { "width": 1600, "height": 900, "deviceScaleFactor": 1 },
+  "blockSelector": "main > header, main > section",
+  "background": "#F1E9D8",
+  "waitMs": 0,
+  "perSlideWaitMs": 0,
+  "slides": [
+    {
+      "name": "A small report, ready for slides",
+      "fit": { "width": 1260, "preserveWide": true, "noCrop": true },
+      "items": [{ "type": "full", "block": 1 }]
+    },
+    {
+      "name": "Give each slide a clear job",
+      "fit": { "width": 1260, "preserveWide": true, "noCrop": true },
+      "items": [{ "type": "full", "block": 2 }]
+    },
+    {
+      "name": "Review before assembly",
+      "fit": { "width": 1260, "preserveWide": true, "noCrop": true },
+      "items": [{ "type": "full", "selector": "main > #diagram" }]
+    },
+    {
+      "name": "Know what each check can tell you",
+      "fit": { "width": 1260, "preserveWide": true, "noCrop": true },
+      "items": [{ "type": "partial", "block": 4, "prefixChildren": [1, 2], "children": [3] }]
+    }
+  ]
+}

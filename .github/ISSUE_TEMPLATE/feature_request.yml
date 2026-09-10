@@ -1,0 +1,18 @@
+name: Feature request
+description: Describe a concrete workflow need.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What task needs better support?
+      description: Explain where the current workflow falls short.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior and alternatives
+      description: Describe a useful outcome and any existing controls you tried. Check ROADMAP.md.
+    validations:
+      required: true
