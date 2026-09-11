@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const { pathToFileURL } = require("url");
 const { assertSafeOutput } = require("./lib/output_safety");
+const { DEFAULT_BLOCK_SELECTOR, validateStaticPlan, validateDomReferences, assertValidPlan } = require("./lib/validate_plan");
 const { createRequire } = require("module");
 const { execSync } = require("child_process");
 
@@ -33,8 +34,6 @@ function requireDependency(name) {
   throw lastErr;
 }
 
-const { chromium } = requireDependency("playwright");
-
 const sourceHtml = process.argv[2];
 const planPath = process.argv[3];
 const outputDir = process.argv[4];
@@ -49,7 +48,13 @@ function fileUrl(p) {
 }
 
 function readJson(p) {
-  return JSON.parse(fs.readFileSync(p, "utf8"));
+  const text = fs.readFileSync(p, "utf8");
+  try { return JSON.parse(text); }
+  catch (err) {
+    const error = new Error(`Static validation failed: ${JSON.stringify(p)}: invalid JSON (${err.name})`);
+    error.name = "SlidePlanValidationError";
+    throw error;
+  }
 }
 
 function cleanDir(dir) {
@@ -58,6 +63,7 @@ function cleanDir(dir) {
 }
 
 async function launchBrowser() {
+  const { chromium } = requireDependency("playwright");
   try {
     return await chromium.launch({ headless: true });
   } catch {
@@ -293,16 +299,15 @@ async function installBuilder(page, plan, stageW, stageH) {
 
 async function main() {
   const plan = readJson(planPath);
+  assertValidPlan("Static", validateStaticPlan(plan));
   const stageW = plan.stage?.width || 1600;
   const stageH = plan.stage?.height || 900;
   const deviceScaleFactor = plan.stage?.deviceScaleFactor || 2;
   const slides = plan.slides || [];
-  if (!slides.length) throw new Error("slide_plan.json must contain a non-empty slides array.");
 
   const shotDir = path.resolve(outputDir);
   fs.accessSync(sourceHtml, fs.constants.R_OK);
   assertSafeOutput(shotDir, [sourceHtml, planPath]);
-  cleanDir(shotDir);
 
   const browser = await launchBrowser();
   const rendered = [];
@@ -314,7 +319,10 @@ async function main() {
 
     await page.goto(fileUrl(sourceHtml), { waitUntil: "domcontentloaded" });
     await waitForPage(page, plan.waitMs);
+    const referenceErrors = await page.evaluate(validateDomReferences, { plan, defaultBlockSelector: DEFAULT_BLOCK_SELECTOR });
+    assertValidPlan("DOM", referenceErrors);
     await installBuilder(page, plan, stageW, stageH);
+    cleanDir(shotDir);
 
     for (let i = 0; i < slides.length; i++) {
       const spec = slides[i];
@@ -364,7 +372,7 @@ async function main() {
 module.exports = { installBuilder };
 if (require.main === module) {
   main().catch((err) => {
-    console.error(err);
+    console.error(err.name === "SlidePlanValidationError" ? err.message : err);
     process.exit(1);
   });
 }

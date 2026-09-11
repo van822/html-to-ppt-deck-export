@@ -88,7 +88,7 @@ test("preview CLI handles literal percent, hash, spaces and Unicode; default sca
   fs.writeFileSync(plan, JSON.stringify({ blockSelector: "main > section", waitMs: 0, slides: [{ items: [{ block: 99 }] }] }));
   const failed = run("export_preview.js", [source, plan, path.join(dir, "invalid")]);
   assert.equal(failed.status, 1);
-  assert.match(failed.stderr, /No block 99/);
+  assert.match(failed.stderr, /DOM validation failed:\nslides\[0\]\.items\[0\]\.block: block 99 does not exist/);
 });
 
 test("four-page offline example produces previews, contact sheet, matching PPTX and QA",

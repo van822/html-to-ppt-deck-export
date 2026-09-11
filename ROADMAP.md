@@ -12,7 +12,7 @@ dates. Future items are not available features.
 
 ## v0.2 — validation and layout diagnostics (planned)
 
-- Slide-plan validation with actionable locations and messages.
+- Slide-plan validation with actionable locations and messages (implemented, unreleased).
 - Overflow detection for clipped content.
 - Layout diagnostics for excessive margins and over-scaled or under-scaled pages.
 

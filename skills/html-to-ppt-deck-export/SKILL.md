@@ -118,6 +118,43 @@ Fit fields:
 - `noCrop`: capture the full stage instead of a content crop.
 - `preserveWide`: skip automatic short/medium width adjustments.
 
+## Plan Validation
+
+The preview command runs dependency-free static validation before loading
+Playwright, opening HTML or clearing output. JSON must contain a root object and
+non-empty slides array; each slide needs a non-empty items array of item objects.
+It checks supported/default types, reference forms, partial selection arrays and
+effective stage/fit values. Unknown fields and overridden values are not rejected
+solely because they are unused. Existing optional defaults remain in place.
+
+After source-page readiness, DOM validation checks selector syntax/matches, block
+bounds and explicit direct-child bounds. Selector precedence and first-match
+behavior remain unchanged. Both phases finish before the output directory is
+cleared, so static and preflight DOM errors preserve existing preview files.
+
+Example stderr (exit 1):
+
+```text
+DOM validation failed:
+slides[2].items[1].block: block 18 does not exist; available range is 1..12 (slide "Overview")
+```
+
+Diagnostic paths use zero-based array indexes; block/child references remain
+one-based. Static failures start with `Static validation failed`. Malformed JSON
+also identifies the plan file. Diagnostics are reported in deterministic order.
+
+Intentional compatibility changes: missing/null/empty items are rejected, and
+explicit nonexistent children/prefixChildren are rejected. The implicit default
+prefix [1,2,3] still ignores absent children on short source blocks. Explicit
+null/[] selects no prefix. Positive integer numeric strings and partial selection
+order/deduplication remain supported. Numeric fit strings remain supported where
+the renderer consumes them; explicitly supplied stage values and wait times must
+be numbers. No forced 16:9 schema restriction or automatic layout change is added.
+
+Validation checks inputs and references, not overflow or sparse/dense layouts.
+Source scripts can change the DOM after preflight. Rendering failures after output
+cleanup do not roll back files; keep accepted exports in separate directories.
+
 ## Visual QA Checklist
 
 Before writing PPTX, inspect the contact sheet and the affected individual PNGs.
