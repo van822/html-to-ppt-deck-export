@@ -195,8 +195,45 @@ rounding. The example uses scale factor 1 and noCrop for fixed 1600×900 PNGs.
 | className, exportCss | Per-slide class hook and plan-level CSS overrides |
 
 See [SKILL.md](skills/html-to-ppt-deck-export/SKILL.md) for the reference and visual
-checklist. Keep the stage at 16:9. Comprehensive schema validation and automatic
-overflow detection are future work.
+checklist. Keep the stage at 16:9 for wide PPTX output. Automatic overflow
+detection and sparse/dense layout diagnostics are future work.
+
+### Validation and early failures
+
+The preview command validates plans in two phases before clearing its output
+directory. Static validation checks JSON, a root object with a non-empty slides
+array, slide/item objects, non-empty items arrays, supported types, integer
+references, selection collections and effective stage/fit settings. It runs before
+loading Playwright or opening the HTML. Unknown fields are allowed; optional
+defaults and fields overridden by selector/fit precedence retain their behavior.
+
+DOM validation runs after the HTML, fonts and images have reached the exporter's
+existing readiness point. It checks CSS selector syntax/matches, available blocks
+and explicitly selected direct children. A selector matching several elements
+still uses the first. Only after both phases pass does output cleanup occur.
+
+Errors go to stderr with exit code 1. Array paths are zero-based; block and child
+references are one-based. A supplied slide name is included and escaped:
+
+    Static validation failed:
+    slides[0].items: must be a non-empty array (slide "Opening")
+
+    DOM validation failed:
+    slides[2].items[1].block: block 18 does not exist; available range is 1..12 (slide "Overview")
+
+Compatibility changes: every slide now needs at least one item; missing, null or
+empty items no longer produce blank pages. Explicit out-of-range children or
+prefixChildren now fail. Omitted prefixChildren still supplies [1, 2, 3] and
+ignores absent implicit children in short blocks. Explicit null or [] still means
+no prefix. Selection order and deduplication are unchanged. Positive integer
+numeric strings remain accepted for references, and supported numeric strings
+remain accepted for fit values; stage dimensions and wait times require numbers.
+
+This is input/reference validation, not a layout-quality check. CSS is not fully
+validated, and signed crop controls and finite topBias values are not restricted
+to visual heuristics. DOM changes after preflight can still cause rendering
+failures. Once rendering starts, output writes are not transactional; use a new
+directory when retaining an accepted version.
 
 ## Examples
 
@@ -247,8 +284,9 @@ For vulnerability reporting and supported-version policy, see [SECURITY.md](SECU
 ## Roadmap
 
 v0.1 establishes installation, examples, regression tests and Windows CI.
-Planned v0.2 work covers slide-plan validation, overflow detection and layout
-diagnostics. Planned v0.3 work covers consolidated QA reports, a unified CLI and
+Unreleased development adds slide-plan validation. Remaining planned v0.2 work
+covers overflow detection and layout diagnostics. Planned v0.3 work covers
+consolidated QA reports, a unified CLI and
 batch/headless improvements. See [ROADMAP.md](ROADMAP.md).
 
 ## Contributing

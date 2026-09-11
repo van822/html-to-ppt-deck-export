@@ -5,9 +5,22 @@ Version numbers follow Semantic Versioning.
 
 ## [Unreleased]
 
+### Added
+
+- Two-phase slide-plan validation with deterministic slide/item/field diagnostics:
+  static checks before browser loading, and DOM reference checks before output cleanup.
+- Regression coverage for invalid plans, reference errors and preservation of
+  existing previews and manifests on preflight failures.
+
 ### Changed
 
 - Upgrade Playwright from 1.61.1 to 1.63.0 and its matching Chromium runtime.
+- Each slide now requires a non-empty items array; blank slides from missing,
+  null or empty items are rejected. Explicit nonexistent partial child references
+  fail; absent implicit default prefix children continue to be ignored.
+- Plan errors print concise phase-specific diagnostics to stderr and exit 1.
+  Existing valid plans retain defaults, selector precedence, output names and
+  manifest fields. Rendering after preflight remains non-transactional.
 
 ## [0.1.0] - 2026-09-10
 
