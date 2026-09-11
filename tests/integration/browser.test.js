@@ -97,10 +97,13 @@ test("four-page offline example produces previews, contact sheet, matching PPTX 
     const preview = path.join(dir, "previews");
     const source = path.join(root, "examples/basic-report/report.html");
     const plan = path.join(root, "examples/basic-report/slide_plan.json");
-    const result = success(run("export_preview.js", [source, plan, preview]));
+    const previewResult = run("export_preview.js", [source, plan, preview]);
+    const result = success(previewResult);
+    assert.equal(previewResult.stderr, "", "accepted basic report must not emit clipping diagnostics");
     assert.equal(result.slides, 4);
     const manifest = JSON.parse(fs.readFileSync(result.manifest));
     assert.equal(manifest.metrics.length, 4);
+    assert.ok(manifest.metrics.every((m) => m.overflow.status === "inside" && m.overflow.diagnosticCount === 0));
     const images = [1, 2, 3, 4].map((n) => fs.readFileSync(path.join(preview, "planned_0" + n + ".png")));
     for (const image of images) {
       assert.equal(image.readUInt32BE(16), 1600);

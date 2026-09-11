@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Deterministic overflow fixtures</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  main > section { position: relative; height: 400px; }
+  .paint { position: absolute; background: #285c53; width: 160px; height: 130px; }
+  #inside .paint { left: 100px; top: 100px; }
+  #horizontal .paint { left: 1540px; top: 100px; }
+  #vertical .paint { left: 100px; top: 850px; }
+  #both .paint { left: 1540px; top: 850px; }
+  #scaled .paint { width: 2000px; height: 200px; transform: scale(.5); transform-origin: top left; }
+  #translated .paint { transform: translate(100px, 100px); }
+  #rotated .paint { left: 600px; top: 200px; transform: rotate(15deg); }
+  #rotated-outside .paint { left: 1550px; top: 100px; transform: rotate(15deg); }
+  #near .paint { left: 1440.5px; }
+  #beyond-tolerance .paint { left: 1441.5px; }
+  #decorated .paint { left: 1440px; border: 6px solid black; outline: 10px solid red; box-shadow: 0 0 50px black; }
+  #hidden .box, #scroll .box, #nested .box { position: absolute; left: 100px; top: 100px; width: 200px; height: 100px; overflow: hidden; border: 4px solid black; }
+  #hidden .paint, #scroll .paint, #nested .paint { width: 300px; height: 180px; }
+  #scroll .box { overflow: auto; }
+  #nested .outer { position: absolute; left: 1400px; width: 150px; height: 200px; overflow: hidden; }
+  #nested .box { left: 0; top: 0; }
+  #cropped { height: 600px; background: #285c53; }
+  #text .line { white-space: nowrap; width: 100px; font: 32px/1 monospace; position: absolute; left: 1500px; top: 200px; }
+  #transparent .paint { left: 1540px; opacity: 0; }
+  #not-displayed .paint { left: 1540px; display: none; }
+  #masked .paint { clip-path: circle(30%); }
+  #generated::before { content: "Generated"; position: absolute; left: 1700px; }
+  #animated .paint { animation: move 20s linear infinite; }
+  #escaped .box { overflow: hidden; width: 200px; height: 100px; }
+  #escaped .paint { left: 1540px; top: 100px; }
+  @keyframes move { from { left: 100px; } to { left: 120px; } }
+</style>
+<main>
+  <section id="inside"><div class="paint"></div></section>
+  <section id="horizontal"><div class="paint"></div></section>
+  <section id="vertical"><div class="paint"></div></section>
+  <section id="both"><div class="paint"></div></section>
+  <section id="scaled"><div class="paint"></div></section>
+  <section id="translated"><div class="paint"></div></section>
+  <section id="rotated"><div class="paint"></div></section>
+  <section id="rotated-outside"><div class="paint"></div></section>
+  <section id="near"><div class="paint"></div></section>
+  <section id="beyond-tolerance"><div class="paint"></div></section>
+  <section id="decorated"><div class="paint"></div></section>
+  <section id="hidden"><div class="box"><div class="paint"></div></div></section>
+  <section id="scroll"><div class="box"><div class="paint"></div></div></section>
+  <section id="nested"><div class="outer"><div class="box"><div class="paint"></div></div></div></section>
+  <section id="cropped"></section>
+  <section id="text"><div class="line">Text beyond the stage</div></section>
+  <section id="transparent"><div class="paint"></div></section>
+  <section id="not-displayed"><div class="paint"></div></section>
+  <section id="masked"><div class="paint"></div></section>
+  <section id="generated"></section>
+  <section id="animated"><div class="paint"></div></section>
+  <section id="escaped"><div class="box"><div class="paint"></div></div></section>
+</main>
+</html>
