@@ -7,6 +7,12 @@ Version numbers follow Semantic Versioning.
 
 ### Added
 
+- Non-blocking overflow/clipping evidence in each preview manifest metric, with
+  stage/crop/container classifications, measured CSS-pixel bounds, a 1px tolerance,
+  explicit uncertainty and concise stderr summaries. Existing output fields and
+  rendered appearance remain unchanged; no automatic layout adjustments occur.
+- Pure geometry and Chromium fixtures for transforms, crop behavior, internal
+  clipping, decoration, text bounds and output compatibility.
 - Two-phase slide-plan validation with deterministic slide/item/field diagnostics:
   static checks before browser loading, and DOM reference checks before output cleanup.
 - Regression coverage for invalid plans, reference errors and preservation of

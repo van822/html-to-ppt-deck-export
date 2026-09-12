@@ -23,6 +23,7 @@ quality still depends on the source, the plan and visual inspection.
 - Select complete blocks, chapter blocks or subsets of direct children.
 - Control scaling, margins, vertical placement, cropping and export-only CSS.
 - Render numbered previews and a numeric-order contact sheet.
+- Report measured overflow/clipping evidence without changing slide composition.
 - Replace, split or merge approved preview pages using replacement rules.
 - Assemble one full-slide PNG per PowerPoint slide.
 - Check picture count, slide dimensions and full-bleed placement with Windows QA.
@@ -64,7 +65,9 @@ After accepting the previews:
 Expect four slides and a QA report with badCount equal to zero. That result checks
 PPTX structure; visual acceptance happens before assembly.
 
-The preview command clears its output directory. Choose a new directory when
+The preview command reports potential clipping in the manifest and short stderr
+messages; these findings do not block export or replace visual review.
+It clears its output directory after plan/reference validation. Choose a new directory when
 retaining an accepted version. Do not use a source or project directory as output.
 
 ## Install as a Codex skill
@@ -159,12 +162,13 @@ put script arguments after --.
 
 ## How it works
 
-    HTML → slide plan → fixed 16:9 previews → contact-sheet QA
+    HTML → slide plan validation → fixed 16:9 preview rendering
+         → overflow/clipping diagnostics → contact-sheet QA
          → iteration → PPTX → final QA
 
 Playwright opens local HTML and clones selected DOM blocks into a fixed stage.
 It fits and optionally crops each composition, then records PNGs and a preview
-manifest. After contact-sheet review, PptxGenJS places accepted PNGs onto wide
+manifest with non-blocking geometry evidence. After contact-sheet review, PptxGenJS places accepted PNGs onto wide
 slides. PowerShell QA reads the PPTX ZIP/XML and checks picture geometry.
 
 Default staging is 1600×900 CSS pixels with deviceScaleFactor 2, producing
@@ -195,8 +199,8 @@ rounding. The example uses scale factor 1 and noCrop for fixed 1600×900 PNGs.
 | className, exportCss | Per-slide class hook and plan-level CSS overrides |
 
 See [SKILL.md](skills/html-to-ppt-deck-export/SKILL.md) for the reference and visual
-checklist. Keep the stage at 16:9 for wide PPTX output. Automatic overflow
-detection and sparse/dense layout diagnostics are future work.
+checklist. Keep the stage at 16:9 for wide PPTX output. Sparse/dense layout
+diagnostics are future work.
 
 ### Validation and early failures
 
@@ -235,6 +239,62 @@ to visual heuristics. DOM changes after preflight can still cause rendering
 failures. Once rendering starts, output writes are not transactional; use a new
 directory when retaining an accepted version.
 
+### Overflow and clipping evidence (unreleased)
+
+After each slide is fitted and the existing per-slide wait finishes, the exporter
+reads transformed element boxes and text-line rectangles before taking the PNG.
+It compares them in **CSS pixels relative to the visual stage origin**, respecting
+supported rectangular clipping ancestors and the actual screenshot crop.
+Raw scrollWidth/scrollHeight values are not compared to screenshot dimensions.
+padX/padY control fitting; occupying the intended padding alone is not clipping.
+
+Each existing manifest metrics entry gains an additive **overflow** object;
+all previous fields and the stdout JSON summary retain their meaning:
+
+| Field | Meaning |
+| --- | --- |
+| coordinateSpace, tolerancePx | stage-relative-css-pixels; 1 CSS pixel per edge |
+| status | inside, diagnostics, or uncertain; inside is not a visual approval |
+| contentBounds | Union of measured fragments surviving supported container clips |
+| stageBounds, cropBounds, visibleBounds | Measured stage, requested screenshot crop, and effective visible intersection |
+| diagnosticCount, truncatedDiagnostics | Number of boundary groups and how many detail groups were omitted |
+| diagnostics | Type, axis, confidence, intent, boundary, bounds, per-edge overflowPx, affectedCount, examples and reasons |
+| limitations | Unsupported or incomplete measurement conditions |
+
+Bounds use left/top/right/bottom. Missing or fully hidden content can have null
+bounds. A finding is classified as **stage-overflow**, **crop-clipping** or
+**container-clipping**, with horizontal/vertical/both axes and measured/uncertain
+confidence. Intent is always unknown: crop settings and overflow:hidden may be
+deliberate. With noCrop, crop-only findings disappear, while stage/container
+findings remain possible. Diagnostics never resize, split or change the plan.
+
+Example terminal summary:
+
+    slides[2] ("Results"): stage-overflow (vertical, measured, 84px beyond boundary); tolerance 1px; inspect manifest overflow evidence and previews; clipping intent is unknown.
+
+Differences of at most 1 CSS pixel are ignored; larger amounts are compared before
+rounding evidence to three decimals. deviceScaleFactor changes PNG resolution,
+not this tolerance. Ordinary shadows/outlines are excluded and borders are
+included. Positive scaling/translation are supported; rotated/skewed/3D boundary
+findings are conservative and marked uncertain.
+
+The model uses boxes, not exact pixels or semantic importance. It cannot fully
+resolve pseudo-elements, complex masks/clip paths, corner clipping, filters,
+overlapping occlusion, embedded documents, shadow content, or internal SVG/canvas/
+media drawing. Recognized unsupported conditions and active animations are
+reported in limitations. Text uses line bounds, which can overestimate ink.
+Content can change between measurement and screenshot. Measurement exceptions
+produce an uncertain result while allowing the existing screenshot operation.
+
+To keep output small, each slide retains up to 20 boundary groups and three
+example descendant paths per group; counts expose omitted groups. Measurement
+caps of 5000 elements/20000 fragments are explicitly reported when reached.
+Normal slides are quiet, abnormal slides get one concise stderr line, and findings
+alone preserve exit code 0. Plan/reference errors still exit 1. See the
+[internal geometry notes](skills/html-to-ppt-deck-export/scripts/lib/overflow_geometry.md)
+for coordinate mapping and implementation limits. Always review previews and
+the contact sheet before accepting the PPTX input.
+
 ## Examples
 
 - [Basic report](examples/basic-report/README.md): offline source, all commands,
@@ -271,7 +331,9 @@ directory when retaining an accepted version.
   PowerPoint versions or office viewers is claimed.
 - **Source material:** use trusted HTML and available assets. The exporter
   executes the page in a browser. Keep private data out of public issues.
-- **QA limits:** automated checks do not judge readability, clipping or meaning.
+- **QA limits:** geometry diagnostics flag potential clipping within documented
+  coverage; automated checks do not judge readability or meaning and cannot
+  certify that all content is visible.
 - **Dependency advisories:** npm audit reports high-severity
   [ICNS](https://github.com/advisories/GHSA-w3rx-r6r6-pgpr) and
   [JXL/HEIF](https://github.com/advisories/GHSA-5p2g-fcmc-qvqq) parser advisories in
@@ -284,8 +346,8 @@ For vulnerability reporting and supported-version policy, see [SECURITY.md](SECU
 ## Roadmap
 
 v0.1 establishes installation, examples, regression tests and Windows CI.
-Unreleased development adds slide-plan validation. Remaining planned v0.2 work
-covers overflow detection and layout diagnostics. Planned v0.3 work covers
+Unreleased development adds slide-plan validation and overflow/clipping evidence.
+Remaining planned v0.2 work covers sparse/dense layout diagnostics. Planned v0.3 work covers
 consolidated QA reports, a unified CLI and
 batch/headless improvements. See [ROADMAP.md](ROADMAP.md).
 

@@ -13,7 +13,7 @@ dates. Future items are not available features.
 ## v0.2 — validation and layout diagnostics (planned)
 
 - Slide-plan validation with actionable locations and messages (implemented, unreleased).
-- Overflow detection for clipped content.
+- Overflow/clipping evidence with documented geometry limits (implemented, unreleased).
 - Layout diagnostics for excessive margins and over-scaled or under-scaled pages.
 
 ## v0.3 — automation interfaces (planned)

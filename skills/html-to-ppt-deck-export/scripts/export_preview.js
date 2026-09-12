@@ -6,6 +6,8 @@ const path = require("path");
 const { pathToFileURL } = require("url");
 const { assertSafeOutput } = require("./lib/output_safety");
 const { DEFAULT_BLOCK_SELECTOR, validateStaticPlan, validateDomReferences, assertValidPlan } = require("./lib/validate_plan");
+const { measureOverflow } = require("./lib/measure_overflow");
+const { classifyOverflow, overflowSummary, unavailableOverflow } = require("./lib/overflow_geometry");
 const { createRequire } = require("module");
 const { execSync } = require("child_process");
 
@@ -328,9 +330,17 @@ async function main() {
       const spec = slides[i];
       const metrics = await page.evaluate((s) => window.__buildPptSlide(s), spec);
       await page.waitForTimeout(plan.perSlideWaitMs ?? 120);
+      let overflow;
+      try {
+        overflow = classifyOverflow(await page.evaluate(measureOverflow), metrics.clip);
+      } catch {
+        overflow = unavailableOverflow();
+      }
       const shotPath = path.join(shotDir, `planned_${String(i + 1).padStart(2, "0")}.png`);
       await page.screenshot({ path: shotPath, clip: metrics.clip });
-      rendered.push({ slide: i + 1, ...metrics, path: shotPath });
+      rendered.push({ slide: i + 1, ...metrics, path: shotPath, overflow });
+      const diagnostic = overflowSummary(i, spec.name, overflow);
+      if (diagnostic) console.error(diagnostic);
     }
   } finally {
     await browser.close();
@@ -355,6 +365,7 @@ async function main() {
       left: r.left,
       clip: r.clip,
       path: r.path,
+      overflow: r.overflow,
     })),
   }, null, 2), "utf8");
 

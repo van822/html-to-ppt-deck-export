@@ -49,6 +49,9 @@ content is rasterized: text, tables and diagrams are not individually editable.
    - Tune each slide with `width`, `maxScale`, `padX`, `padY`, `topBias`, `cropX`, `cropY`, and `className`.
    - The preview directory is cleared each run. Use a new directory to retain an
      accepted version; never choose an input or project directory as output.
+   - Read the per-slide overflow evidence in manifest.json and any concise stderr
+     summaries. Findings do not change layout or stop export; inspect the affected
+     previews to decide whether clipping is intentional.
 
 4. Generate a contact sheet.
    - Use `scripts/make_contact_sheet.js <preview_dir> [contact_sheet.png]`.
@@ -151,7 +154,8 @@ order/deduplication remain supported. Numeric fit strings remain supported where
 the renderer consumes them; explicitly supplied stage values and wait times must
 be numbers. No forced 16:9 schema restriction or automatic layout change is added.
 
-Validation checks inputs and references, not overflow or sparse/dense layouts.
+Plan validation checks inputs and references. Post-fit overflow measurements are
+separate diagnostics; sparse/dense layout heuristics remain future work.
 Source scripts can change the DOM after preflight. Rendering failures after output
 cleanup do not roll back files; keep accepted exports in separate directories.
 
@@ -166,6 +170,45 @@ Before writing PPTX, inspect the contact sheet and the affected individual PNGs.
 - Screenshot evidence should preserve the important UI, not just the browser chrome.
 - Captions should use stable labels such as `Screenshot A` on one line and the title/description on the next line.
 - If two screenshots have very different heights, prefer separate pages or rebalance the layout instead of forcing a mismatched pair.
+
+## Overflow/Clipping Diagnostics
+
+Each manifest metrics entry adds an overflow object after fitting and the existing
+per-slide wait. It contains coordinateSpace (stage-relative-css-pixels),
+tolerancePx (1), status (inside/diagnostics/uncertain), contentBounds, stageBounds,
+cropBounds, visibleBounds, diagnosticCount, truncatedDiagnostics, diagnostics and
+limitations. Existing manifest fields and CLI arguments are unchanged.
+
+Element/client text rectangles already include transforms. Subtract the stage's
+visual origin and compare against stage/viewport/crop intersections in CSS pixels.
+The 1px tolerance is applied per edge before rounding evidence to three decimals;
+deviceScaleFactor affects PNG resolution only. Fitting margins are not clipping
+boundaries. Do not infer clipping from raw scroll dimensions.
+
+Types are stage-overflow, crop-clipping and container-clipping. Findings carry
+horizontal/vertical/both axes, measured/uncertain confidence, unknown intent,
+boundary and content/visible bounds, per-edge overflowPx, affected fragment count,
+up to three example descendant paths and reasons. Rectangular container clipping
+is applied before stage/crop checks. noCrop removes crop-only loss but not stage
+or internal clipping. Explicit crop/overflow:hidden may be intentional.
+
+Inside means no detected problem within measurement coverage, not approval.
+Shadows/outlines are excluded; borders are included. Positive axis-aligned scale
+and translation are supported. Rotation/skew/3D intersections are conservative
+and flagged uncertain. Complex masks, generated content, embedded/shadow content
+and animations have explicit coverage limitations. SVG/canvas/media/control
+internals, corner masks, filters and occlusion are not fully analyzed.
+
+Diagnostics cap detail at 20 boundary groups per slide, recording omissions.
+Traversal caps of 5000 elements/20000 fragments also produce limitations.
+Unavailable measurements retain the same object fields, with null bounds and an
+uncertain status. One concise stderr line is emitted per affected/uncertain slide;
+stdout stays JSON and diagnostics alone keep exit 0. Plan/reference failures
+remain exit 1. Nothing automatically changes the HTML, fit settings or plan.
+
+See [internal geometry notes](scripts/lib/overflow_geometry.md). Read the evidence,
+inspect the individual preview and contact sheet, and iterate only through the
+existing preview-first workflow. These diagnostics do not replace visual review.
 
 ## Script Usage
 
